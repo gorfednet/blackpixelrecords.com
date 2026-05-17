@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editors / tooling
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# SMB / interrupted transfers on network shares (rsync deletes these as stale)
+.smbdelete*
+
+# Secrets (none required today; keeps deploy env files out by default)
+.env
+.env.*
