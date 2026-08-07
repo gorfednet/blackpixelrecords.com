@@ -1,0 +1,13 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    uses: gorfednet/.github/.github/workflows/pr-check-static.yml@main
+    with:
+      build-command: ./deploy.sh
+      health-paths: index.html
