@@ -16,3 +16,4 @@
 # Secrets (none required today; keeps deploy env files out by default)
 .env
 .env.*
+.deploy-env

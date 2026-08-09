@@ -1,21 +1,17 @@
 #!/usr/bin/env bash
 # deploy.sh: Black Pixel Records
-# Creates route-directory index.html fallbacks (for hosts without Nginx rewrite support)
-# and rsyncs the site to the target server.
-#
-# Usage:
-#   ./deploy.sh [user@host:/remote/path]
-#   ./deploy.sh                          # dry-run: only creates local fallbacks
-#
+# Creates route-directory index.html fallbacks and rsyncs the site to NAS over SSH.
 set -euo pipefail
 
 SITE_ROOT="$(cd "$(dirname "$0")" && pwd)"
-REMOTE="${1:-}"
+# shellcheck source=../gorfednet.github/scripts/nas-ssh-deploy.sh
+source "${SITE_ROOT}/../gorfednet.github/scripts/nas-ssh-deploy.sh"
 
-# ---------------------------------------------------------------------------
-# Page routes discovered from existing root-level .html files.
-# Keeps fallback generation aligned with real pages in this repo.
-# ---------------------------------------------------------------------------
+nas_ssh_load_env "${SITE_ROOT}"
+NAS_SITE_DIR="${NAS_SITE_DIR:-blackpixelrecords.com}"
+REMOTE_TARGET="$(nas_ssh_target "${NAS_SITE_DIR}")"
+RSYNC_SHELL="$(nas_ssh_rsync_shell)"
+
 PAGES=()
 while IFS= read -r page; do
   PAGES+=("$page")
@@ -47,30 +43,21 @@ else
   done
 fi
 
-# Root index fallback (Nginx tries $uri/index.html for /)
 if [[ -f "$SITE_ROOT/index.html" ]]; then
-  # Already at root; nothing to do. Nginx serves index.html for /
   echo "    OK  index.html (root)"
 fi
 
 echo ""
 echo "==> Fallback generation complete."
+echo "==> Deploying to ${REMOTE_TARGET}"
 
-# ---------------------------------------------------------------------------
-# Optional rsync deploy
-# ---------------------------------------------------------------------------
-if [[ -n "$REMOTE" ]]; then
-  echo ""
-  echo "==> Deploying to $REMOTE"
-  rsync -avz --delete \
-    --exclude='.git' \
-    --exclude='*.php'   \
-    --exclude='deploy.sh' \
-    --exclude='smoke-test.sh' \
-    --exclude='nginx-routes.conf' \
-    "$SITE_ROOT/" "$REMOTE"
-  echo "==> Deploy complete."
-else
-  echo "==> No remote specified; local fallbacks only."
-  echo "    To deploy: ./deploy.sh user@host:/var/www/blackpixelrecords"
-fi
+nas_ssh_preflight "${NAS_SITE_DIR}"
+rsync -avz --delete -e "${RSYNC_SHELL}" \
+  --exclude='.git' \
+  --exclude='*.php' \
+  --exclude='deploy.sh' \
+  --exclude='smoke-test.sh' \
+  --exclude='nginx-routes.conf' \
+  "${SITE_ROOT}/" "${REMOTE_TARGET}"
+
+echo "==> Deploy complete."
