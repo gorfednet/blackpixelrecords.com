@@ -17,8 +17,8 @@ Static marketing site for **Black Pixel Records** — a Toronto underground elec
 | `site.webmanifest` | PWA/manifest metadata referencing Android icon sizes |
 | `scripts/generate-favicons.py` | Regenerates favicons from `img/logo.gif` |
 | `releases/sampler/` | Album art plus MP3 preview tracks for the on-site player |
-| `deploy.sh` | Builds route fallbacks locally and optionally `rsync`s to a target |
-| `Makefile` | `make deploy` defaulting to SMB-mounted web root; `make favicons` to rebuild icons |
+| `deploy.sh` | Builds route fallbacks and deploys them to the NAS over SSH |
+| `Makefile` | `make deploy` publishes to the configured NAS over SSH; `make favicons` rebuilds icons |
 
 ## Local preview
 
@@ -42,26 +42,21 @@ This writes `img/logo-square.png`, root-level PNG/ICO files, and `site.webmanife
 
 ## Deploy
 
-1. Ensure the SMB share hosting the production web root is mounted (for example `/Volumes/data` → `websites/blackpixelrecords.com`).
-2. Run:
+Run:
 
 ```bash
 make deploy
 ```
 
-Override the destination when needed:
+Override NAS settings when needed:
 
 ```bash
-DEPLOY_TARGET=/path/to/web/root make deploy
+cp .deploy-env.example .deploy-env
+# Edit .deploy-env, then:
+make deploy
 ```
 
-To only regenerate local route-directory copies of pages (no rsync):
-
-```bash
-./deploy.sh
-```
-
-`deploy.sh` excludes repository-only files (e.g. this script itself) from the published tree.
+`deploy.sh` generates route-directory fallbacks, performs an SSH write preflight, and excludes repository-only files from the published tree.
 
 ## Copyright
 

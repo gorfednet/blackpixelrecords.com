@@ -10,7 +10,6 @@ source "${SITE_ROOT}/../gorfednet.github/scripts/nas-ssh-deploy.sh"
 nas_ssh_load_env "${SITE_ROOT}"
 NAS_SITE_DIR="${NAS_SITE_DIR:-blackpixelrecords.com}"
 REMOTE_TARGET="$(nas_ssh_target "${NAS_SITE_DIR}")"
-RSYNC_SHELL="$(nas_ssh_rsync_shell)"
 
 PAGES=()
 while IFS= read -r page; do
@@ -52,12 +51,12 @@ echo "==> Fallback generation complete."
 echo "==> Deploying to ${REMOTE_TARGET}"
 
 nas_ssh_preflight "${NAS_SITE_DIR}"
-rsync -avz --delete -e "${RSYNC_SHELL}" \
+nas_ssh_rsync_to "${REMOTE_TARGET}" -avz --delete \
   --exclude='.git' \
   --exclude='*.php' \
   --exclude='deploy.sh' \
   --exclude='smoke-test.sh' \
   --exclude='nginx-routes.conf' \
-  "${SITE_ROOT}/" "${REMOTE_TARGET}"
+  "${SITE_ROOT}/"
 
 echo "==> Deploy complete."
